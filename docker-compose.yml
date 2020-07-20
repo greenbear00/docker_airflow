@@ -1,0 +1,118 @@
+version: "3"
+services:
+
+    # https://github.com/apache/airflow/issues/8605
+
+    # 네트워크 brige를 통해서 연동 
+    # 원래 network brige랑 link를 통해서 연결했는데 이를 volumes로 연결하면 연결됨. (일반적으로 links 등은 이제 사용안함)
+    # https://docs.tibco.com/pub/bwce/2.5.2/doc/html/GUID-E7191578-7E50-4460-93BA-2FF1621CD5B9.html
+
+    postgres:
+        image: postgres:9.6
+        container_name: postgres
+        # restart: always
+        # network_mode: bridge
+        environment: 
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+            - POSTGRES_DB=airflow
+            - POSTGRES_PORT=5432
+        volumes:
+            - ./postgres:/var/lib/postgresql/data
+        ports:
+            - 5432:5432
+        healthcheck:
+            test: "pg_isready -h localhost -p 5432 -q -U postgres"
+            interval: 3s
+            timeout: 1s
+            retries: 10
+
+    initdb:
+        build: .
+        container_name: initdb
+        depends_on: 
+            - postgres
+        # links:
+        #     - postgres # alias 처럼 hostname을 매핑해줌 postgres:postgres
+        # network_mode: bridge
+        # environment: 
+        #     - POSTGRES_USER=airflow
+        #     - POSTGRES_PASSWORD=airflow
+        #     - POSTGRES_DB=airflow
+        #     - POSTGRES_PORT=5432
+        #     - EXECUTOR=Local
+        #     - AIRFLOW__CORE__executor=LocalExecutor
+        #     - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+        #     - AIRFLOW__CORE__FERNET_KEY= eCnKfrzLCnv5hTCAxHm36EYVxmIcyJMoBMPQDD4do9Q=
+        
+        # command: sh -c "./wait_it_psql.sh postgres echo 'test'"
+        command: sh -c "/home/airflow/wait_it_psql_and_create_user.sh postgres airflow initdb"
+        volumes:
+            - ./airflow:/usr/local/airflow
+        # volumes로 마운트 시켜버리면, 덮어버리기 때문에 파일 날라감
+            # - ./airflow-data/dags:/usr/local/airflow/dags
+        #     - ./airflow-data/logs:/usr/local/airflow/logs
+        #     - ./airflow-data/plugins:/usr/local/airflow/plugins
+    
+    airflow_webserver:
+        build: .
+        container_name: airflow_webserver
+        restart: always
+        depends_on: 
+            - postgres
+        # environment:
+        #     - POSTGRES_USER=airflow
+        #     - POSTGRES_PASSWORD=airflow
+        #     - POSTGRES_DB=airflow
+        #     - POSTGRES_PORT=5432
+        #     - EXECUTOR=Local
+        #     - AIRFLOW__CORE__executor=LocalExecutor
+        #     - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+        #     - AIRFLOW__CORE__FERNET_KEY= eCnKfrzLCnv5hTCAxHm36EYVxmIcyJMoBMPQDD4do9Q=
+        # command: sh -c "./wait_it_psql.sh postgres airflow webserver"
+        # network_mode: bridge
+        command: sh -c "/home/airflow/wait_it_psql.sh postgres airflow webserver"
+        ports:
+            - 8080:8080
+        volumes:
+            - ./airflow:/usr/local/airflow
+            - ./airflow/dags:/usr/local/airflow/dags
+        healthcheck:
+            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
+
+
+    airflow_scheduler:
+        build: .
+        container_name: airflow_scheduler
+        restart: always
+        depends_on: 
+            - airflow_webserver
+        # network_mode: bridge
+        # command: sh -c "./wait_it_psql.sh postgres airflow scheduler"
+        # environment:
+            # - POSTGRES_USER=airflow
+            # - POSTGRES_PASSWORD=airflow
+            # - POSTGRES_DB=airflow
+            # - POSTGRES_PORT=5432
+            # - EXECUTOR=Local
+            # - AIRFLOW__CORE__executor=LocalExecutor
+            # - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+            # - AIRFLOW__CORE__FERNET_KEY= eCnKfrzLCnv5hTCAxHm36EYVxmIcyJMoBMPQDD4do9Q=
+        command: sh -c "/home/airflow/wait_it_psql.sh postgres airflow scheduler"
+        volumes:
+            - ./airflow:/usr/local/airflow
+            - ./airflow/dags:/usr/local/airflow/dags
+        healthcheck:
+            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-scheduler.pid ]"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
+
+
+volumes:
+    postgres:
+    airflow:
+                        
