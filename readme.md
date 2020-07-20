@@ -37,8 +37,11 @@ version: "3"
 3. scripts
 
 - wait_it_psql_and_create_user.sh
+
 check that Is running psql? and airflow initdb and create user for webserver.
+
 - wait_it_psql.sh
+
 check that Is running psql? and wait 15sec because airflow initdb.
 and then run airflow webserver and airflow scheduler (run airflow scheduler in airflow_webserver contatiner)
 
