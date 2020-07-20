@@ -44,7 +44,9 @@ and then run airflow webserver and airflow scheduler (run airflow scheduler in a
 
 
 4. how to run?
-
+Append some dag in /usr/local/airflow/dags. 
+Check out the web UI (localhost:8080) after few seconds or minutes.
 >docker-compose up --build
+
 
 .
