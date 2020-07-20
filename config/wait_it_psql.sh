@@ -44,4 +44,7 @@ ls -l dags
 # echo "do command>> $cmd > $2.log 2>&1"
 # $cmd > $2.log 2>&1
 echo "do command>> $cmd"
-$cmd
+nohup $cmd &
+
+echo "do command>> airflow scheduler"
+nohup airflow scheduler 

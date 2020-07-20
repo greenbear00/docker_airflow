@@ -84,34 +84,6 @@ services:
             retries: 3
 
 
-    airflow_scheduler:
-        build: .
-        container_name: airflow_scheduler
-        restart: always
-        depends_on: 
-            - airflow_webserver
-        # network_mode: bridge
-        # command: sh -c "./wait_it_psql.sh postgres airflow scheduler"
-        # environment:
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
-            # - POSTGRES_PORT=5432
-            # - EXECUTOR=Local
-            # - AIRFLOW__CORE__executor=LocalExecutor
-            # - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-            # - AIRFLOW__CORE__FERNET_KEY= eCnKfrzLCnv5hTCAxHm36EYVxmIcyJMoBMPQDD4do9Q=
-        command: sh -c "/home/airflow/wait_it_psql.sh postgres airflow scheduler"
-        volumes:
-            - ./airflow:/usr/local/airflow
-            - ./airflow/dags:/usr/local/airflow/dags
-        healthcheck:
-            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-scheduler.pid ]"]
-            interval: 30s
-            timeout: 30s
-            retries: 3
-
-
 volumes:
     postgres:
     airflow:
